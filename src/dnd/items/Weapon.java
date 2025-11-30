@@ -1,7 +1,9 @@
 package dnd.items;
 
+import dnd.characters.Player;
+
 public class Weapon extends Item {
-    private int attackBoost;
+    private final int attackBoost;
     
     public Weapon(String name, int attackBoost) {
         super(name);
@@ -13,7 +15,7 @@ public class Weapon extends Item {
     }
     
     @Override
-    public void use() {
+    public void use(Player player) {
         System.out.println("Equipped " + name + " (+" + attackBoost + " ATK)");
     }
 }

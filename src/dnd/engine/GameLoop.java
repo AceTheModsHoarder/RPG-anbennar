@@ -1,10 +1,10 @@
 package dnd.engine;
 
-import java.util.Scanner;
-import dnd.characters.Player;
 import dnd.characters.Monster;
+import dnd.characters.Player;
 import dnd.combat.CombatSystem;
 import dnd.items.*;
+import java.util.Scanner;
 
 public class GameLoop {
     private Scanner sc = new Scanner(System.in);
@@ -23,6 +23,7 @@ public class GameLoop {
             System.out.print("Choice: ");
             
             int choice = sc.nextInt();
+            sc.nextLine();
             
             switch (choice) {
                 case 1 -> player.showStats();
@@ -64,6 +65,9 @@ public class GameLoop {
         
         if (!m.isAlive()) {
             dropRandomItem();
+            System.out.println("Press Enter to continue...");
+            sc.nextLine();
+
         }
     }
     
@@ -83,10 +87,12 @@ public class GameLoop {
             System.out.println("\nThe enemy dropped an Iron Sword!");
             Weapon w = new Weapon("Iron Sword", 3);
             player.addItem(w);
-            player.increaseAttack(w.getAttackBoost());
+            player.addItem(w);
+            System.out.println("You can equip this weapon in the Inventory menu.");
+
         } else {
             System.out.println("\nYou found a Healing Potion!");
-            Potion p = new Potion("Healing Potion", 15, player);
+            Potion p = new Potion("Healing Potion", 15);
             player.addItem(p);
         }
     }

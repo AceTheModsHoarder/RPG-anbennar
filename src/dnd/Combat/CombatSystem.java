@@ -24,7 +24,13 @@ public class CombatSystem {
                 int dmg = Math.max(0, p.getAttack() - m.getDefense());
                 m.takeDamage(dmg);
                 System.out.println("You dealt " + dmg + " damage!");
+
+                if (!m.isAlive()) {
+                System.out.println("You collapsed after the battle...");
+                return;
                 
+}
+
                 if (!m.isAlive()) {
                     System.out.println("You defeated the " + m.getName() + "!");
                     return;

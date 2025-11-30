@@ -1,11 +1,11 @@
 package dnd.characters;
 
+import dnd.items.Item;
 import java.util.ArrayList;
 import java.util.Scanner;
-import dnd.items.Item;
 
 public class Player extends Character {
-    private ArrayList<Item> inventory = new ArrayList<>();
+    private final ArrayList<Item> inventory = new ArrayList<>();
     
     public Player(String name) {
         super(name, 30, 6, 3);
@@ -54,7 +54,7 @@ public class Player extends Character {
         }
         
         Item item = inventory.get(choice-1);
-        item.use();
+        item.use(this);
         inventory.remove(item);
     }
 }

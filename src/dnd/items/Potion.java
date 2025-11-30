@@ -3,19 +3,21 @@ package dnd.items;
 import dnd.characters.Player;
 
 public class Potion extends Item {
-    private int healAmount;
-    private Player player;
+    private final int healAmount;
     
-    public Potion(String name, int healAmount, Player player) {
+    
+    public Potion(String name, int healAmount) {
         super(name);
         this.healAmount = healAmount;
-        this.player = player;
     }
     
+    public int getHealAmount() {
+        return healAmount;
+    }
+
     @Override
-    public void use() {
+    public void use(Player player) {
         player.heal(healAmount);
-        System.out.println("You drink a " + name + 
-            " and restore " + healAmount + " HP!");
+        System.out.println("You used a " + getName() + " and healed " + healAmount + " HP!");
     }
 }
