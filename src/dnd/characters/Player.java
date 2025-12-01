@@ -1,12 +1,15 @@
 package dnd.characters;
 
+import dnd.characters.Monster;
+import dnd.items.Weapon;
 import dnd.items.Armor;
 import dnd.items.Potion;
-import dnd.items.Weapon;
+import dnd.items.Consumable;
+import dnd.items.Inventory;
 import dnd.skills.Skill;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
+import java.util.List;
+import java.util.ArrayList;
 
 public class Player {
     private String name;
@@ -20,43 +23,33 @@ public class Player {
     private int armorClass;
     private int level;
     private int experience;
-    private int gold;
     private boolean isAlive;
     private boolean isDefending;
     private Weapon equippedWeapon;
     private Armor equippedArmor;
-    private List<Object> inventory;
-    private List<Skill> skills; // Add this line
-    private int percentArmorPenetration; // Percentage armor ignore (0-100)
-    private int flatArmorPenetration;    // Flat armor reduction
+    private Inventory inventory; // Changed from List<Object>
+    private List<Skill> skills;
+    private int percentArmorPenetration;
+    private int flatArmorPenetration;
     
     public Player(String name) {
         this.name = name;
         this.level = 1;
         this.experience = 0;
-        this.gold = 0;
         this.maxHp = 20;
         this.hp = maxHp;
         this.maxMana = 10;
         this.mana = maxMana;
-        this.attack = 5;
+        this.attack = 8; // Increased for better combat
         this.defense = 3;
-        this.dexterity = 10;
+        this.dexterity = 14; // Increased for better hit chance
         this.armorClass = 12;
         this.isAlive = true;
         this.isDefending = false;
-        this.inventory = new ArrayList<>();
-        this.skills = new ArrayList<>(); // Initialize skills list
+        this.inventory = new Inventory(); // Now using Inventory class
+        this.skills = new ArrayList<>();
         this.percentArmorPenetration = 0;
         this.flatArmorPenetration = 0;
-        initializeSkills(); // Add basic skills
-    }
-    
-    private void initializeSkills() {
-        // Add some basic skills - you can create these classes later
-        // skills.add(new BasicAttack());
-        // skills.add(new Fireball());
-        // skills.add(new Heal());
     }
     
     // Getters
@@ -83,13 +76,13 @@ public class Player {
     public int getArmorClass() { return armorClass; }
     public int getLevel() { return level; }
     public int getExperience() { return experience; }
-    public int getGold() { return gold; }
+    public int getGold() { return inventory.getGold(); } // Get gold from inventory
     public boolean isAlive() { return isAlive; }
     public boolean isDefending() { return isDefending; }
     public Weapon getEquippedWeapon() { return equippedWeapon; }
     public Armor getEquippedArmor() { return equippedArmor; }
-    public List<Object> getInventory() { return inventory; }
-    public List<Skill> getSkills() { return skills; } // Add this getter
+    public Inventory getInventory() { return inventory; } // Returns Inventory object
+    public List<Skill> getSkills() { return skills; }
     public int getPercentArmorPenetration() { return percentArmorPenetration; }
     public int getFlatArmorPenetration() { return flatArmorPenetration; }
     
@@ -119,73 +112,173 @@ public class Player {
     public void restoreMana(int amount) {
         mana = Math.min(maxMana, mana + amount);
     }
-
-    public int calculateEffectiveArmor(Monster monster) {
-        int monsterArmor = monster.getArmor();
-        
-        // Apply percentage penetration first
-        double armorAfterPercentPen = monsterArmor * (1.0 - (percentArmorPenetration / 100.0));
-        
-        // Apply flat penetration
-        int effectiveArmor = (int) Math.max(0, armorAfterPercentPen - flatArmorPenetration);
-        
-        return effectiveArmor;
+    
+    // Add this method to your Player class:
+    public void applyResistanceReduction(Monster target, int reductionAmount) {
+    target.reduceDamageResistance(reductionAmount);
+    System.out.println(target.getName() + "'s damage resistance reduced by " + reductionAmount + "!");
     }
     
-    // Inventory methods
+    // Inventory methods - updated for Inventory class
     public void addItem(Object item) {
-        inventory.add(item);
+        if (item instanceof Weapon) {
+            inventory.addWeapon((Weapon) item);
+        } else if (item instanceof Armor) {
+            inventory.addArmor((Armor) item);
+        } else if (item instanceof Consumable) {
+            inventory.addConsumable((Consumable) item);
+        } else if (item instanceof Potion) {
+            // Convert Potion to Consumable
+            Potion potion = (Potion) item;
+            inventory.addConsumable(new Consumable(
+                potion.getName(), 
+                potion.getDescription(), 
+                potion.getHealAmount()
+            ));
+        }
     }
     
     public void useItemMenu(Scanner scanner) {
-        if (inventory.isEmpty()) {
-            System.out.println("Your inventory is empty!");
+        inventory.displayInventory();
+        
+        if (inventory.getConsumables().isEmpty() && 
+            inventory.getWeapons().isEmpty() && 
+            inventory.getArmors().isEmpty()) {
+            System.out.println("No items to use!");
             return;
         }
         
-        System.out.println("\n=== INVENTORY ===");
-        for (int i = 0; i < inventory.size(); i++) {
-            Object item = inventory.get(i);
-            if (item instanceof Potion) {
-                Potion potion = (Potion) item;
-                System.out.println((i + 1) + ". " + potion.getName() + " - " + potion.getDescription());
-            } else if (item instanceof Weapon) {
-                Weapon weapon = (Weapon) item;
-                System.out.println((i + 1) + ". " + weapon.getName() + " (+" + weapon.getAttackBonus() + " ATK)");
-            } else if (item instanceof Armor) {
-                Armor armor = (Armor) item;
-                System.out.println((i + 1) + ". " + armor.getName() + " (+" + armor.getDefenseBonus() + " DEF)");
-            }
-        }
-        System.out.println((inventory.size() + 1) + ". Back");
-        System.out.print("Choose item to use: ");
+        System.out.println("\nWhat type of item would you like to use?");
+        System.out.println("1. Use Consumable");
+        System.out.println("2. Equip Weapon");
+        System.out.println("3. Equip Armor");
+        System.out.println("4. Back");
+        System.out.print("Choice: ");
         
+        int choice = scanner.nextInt();
+        scanner.nextLine(); // Clear buffer
+        
+        switch (choice) {
+            case 1 -> useConsumable(scanner);
+            case 2 -> equipWeapon(scanner);
+            case 3 -> equipArmor(scanner);
+            case 4 -> System.out.println("Returning...");
+            default -> System.out.println("Invalid choice!");
+        }
+    }
+    
+    private void useConsumable(Scanner scanner) {
+        List<Consumable> consumables = inventory.getConsumables();
+        if (consumables.isEmpty()) {
+            System.out.println("No consumables available!");
+            return;
+        }
+        
+        System.out.println("\nSelect consumable to use:");
+        for (int i = 0; i < consumables.size(); i++) {
+            Consumable c = consumables.get(i);
+            System.out.println((i + 1) + ". " + c.getName() + 
+                             " - " + c.getDescription() + 
+                             " (x" + c.getQuantity() + ")");
+        }
+        System.out.println((consumables.size() + 1) + ". Back");
+        
+        System.out.print("Choice: ");
         int choice = scanner.nextInt() - 1;
-        if (choice >= 0 && choice < inventory.size()) {
-            Object item = inventory.get(choice);
-            if (item instanceof Potion) {
-                Potion potion = (Potion) item;
-                potion.use(this);
-                inventory.remove(choice);
-                System.out.println("Used " + potion.getName());
-            } else if (item instanceof Weapon) {
-                Weapon weapon = (Weapon) item;
-                if (equippedWeapon != null) {
-                    inventory.add(equippedWeapon);
-                }
-                equippedWeapon = weapon;
-                inventory.remove(weapon);
-                System.out.println("Equipped " + weapon.getName());
-            } else if (item instanceof Armor) {
-                Armor armor = (Armor) item;
-                if (equippedArmor != null) {
-                    inventory.add(equippedArmor);
-                }
-                equippedArmor = armor;
-                inventory.remove(armor);
-                System.out.println("Equipped " + armor.getName());
+        
+        if (choice >= 0 && choice < consumables.size()) {
+            Consumable consumable = consumables.get(choice);
+            consumable.use(this);
+            
+            if (consumable.isEmpty()) {
+                inventory.getConsumables().remove(consumable);
             }
         }
+    }
+    
+    private void equipWeapon(Scanner scanner) {
+        List<Weapon> weapons = inventory.getWeapons();
+        if (weapons.isEmpty()) {
+            System.out.println("No weapons available!");
+            return;
+        }
+        
+        System.out.println("\nSelect weapon to equip:");
+        for (int i = 0; i < weapons.size(); i++) {
+            Weapon w = weapons.get(i);
+            System.out.println((i + 1) + ". " + w.getName() + 
+                             " (+" + w.getAttackBonus() + " ATK)");
+        }
+        System.out.println((weapons.size() + 1) + ". Back");
+        
+        System.out.print("Choice: ");
+        int choice = scanner.nextInt() - 1;
+        
+        if (choice >= 0 && choice < weapons.size()) {
+            Weapon weapon = weapons.get(choice);
+            
+            // Unequip current weapon if any
+            if (equippedWeapon != null) {
+                inventory.addWeapon(equippedWeapon);
+            }
+            
+            // Equip new weapon and remove from inventory
+            equippedWeapon = weapon;
+            inventory.getWeapons().remove(weapon);
+            System.out.println("Equipped " + weapon.getName() + "!");
+        }
+    }
+    
+    private void equipArmor(Scanner scanner) {
+        List<Armor> armors = inventory.getArmors();
+        if (armors.isEmpty()) {
+            System.out.println("No armor available!");
+            return;
+        }
+        
+        System.out.println("\nSelect armor to equip:");
+        for (int i = 0; i < armors.size(); i++) {
+            Armor a = armors.get(i);
+            System.out.println((i + 1) + ". " + a.getName() + 
+                             " (+" + a.getDefenseBonus() + " DEF)");
+        }
+        System.out.println((armors.size() + 1) + ". Back");
+        
+        System.out.print("Choice: ");
+        int choice = scanner.nextInt() - 1;
+        
+        if (choice >= 0 && choice < armors.size()) {
+            Armor armor = armors.get(choice);
+            
+            // Unequip current armor if any
+            if (equippedArmor != null) {
+                inventory.addArmor(equippedArmor);
+            }
+            
+            // Equip new armor and remove from inventory
+            equippedArmor = armor;
+            inventory.getArmors().remove(armor);
+            System.out.println("Equipped " + armor.getName() + "!");
+        }
+    }
+    
+    public void gainGold(int amount) {
+        if (amount > 0) {
+            inventory.addGold(amount);
+        } else if (amount < 0) {
+            // Spending gold
+            int goldToRemove = -amount;
+            if (inventory.getGold() >= goldToRemove) {
+                inventory.addGold(amount); // Negative amount reduces gold
+            }
+        }
+    }
+    
+    // Calculate effective armor after penetration
+    public int calculateEffectiveArmor(dnd.characters.Monster monster) {
+        int monsterArmor = monster.getArmor();
+        double armorAfterPercentPen = monsterArmor * (1.0 - (percentArmorPenetration / 100.0));
+        return (int) Math.max(0, armorAfterPercentPen - flatArmorPenetration);
     }
     
     // Display methods
@@ -196,14 +289,21 @@ public class Player {
         System.out.println("HP: " + hp + "/" + maxHp);
         System.out.println("MP: " + mana + "/" + maxMana);
         System.out.println("Exp: " + experience + "/" + (level * 100));
-        System.out.println("Gold: " + gold);
+        System.out.println("Gold: " + getGold());
         System.out.println("Weapon: " + (equippedWeapon != null ? equippedWeapon.getName() : "None"));
         System.out.println("Armor: " + (equippedArmor != null ? equippedArmor.getName() : "None"));
         System.out.println("Attack: " + getAttack());
+        System.out.println("Defense: " + getDefense());
         System.out.println("Dexterity: " + dexterity);
-        
-        // Simplified penetration stats
+        System.out.println("Armor Class: " + armorClass);
         System.out.println("Armor Penetration: " + percentArmorPenetration + "% + " + flatArmorPenetration + " flat");
+        
+        if (!skills.isEmpty()) {
+            System.out.println("\nSkills:");
+            for (Skill skill : skills) {
+                System.out.println("  - " + skill.getName() + " (" + skill.getManaCost() + " MP)");
+            }
+        }
     }
     
     // Skill methods
@@ -211,18 +311,10 @@ public class Player {
         skills.add(skill);
     }
     
-    public boolean hasSkills() {
-        return !skills.isEmpty();
-    }
-    
     // Progression methods
     public void gainExperience(int exp) {
         experience += exp;
         checkLevelUp();
-    }
-    
-    public void gainGold(int amount) {
-        gold += amount;
     }
     
     private void checkLevelUp() {
@@ -244,11 +336,5 @@ public class Player {
         
         System.out.println("Level up! You are now level " + level + "!");
         System.out.println("HP: " + maxHp + ", MP: " + maxMana + ", Attack: " + attack);
-    }
-
-    // Method for spells/effects to reduce monster resistance
-    public void applyResistanceReduction(Monster target, int reductionAmount) {
-        target.reduceDamageResistance(reductionAmount);
-        System.out.println(target.getName() + "'s damage resistance reduced by " + reductionAmount + "!");
     }
 }

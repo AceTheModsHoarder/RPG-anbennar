@@ -77,41 +77,47 @@ public class CombatSystem {
     }
     
     private static void performAttack(Player p, Monster m) {
+    // D&D 5e: Roll d20, add attack bonus, compare to armor class
     int attackRoll = random.nextInt(20) + 1;
     boolean isCritical = (attackRoll == 20);
     
-    // Calculate effective armor after penetration
-    int effectiveArmor = p.calculateEffectiveArmor(m);
-    int monsterResistance = m.getDamageResistance();
+    // Calculate attack bonus: proficiency + ability modifier
+    int proficiencyBonus = 2 + ((p.getLevel() - 1) / 4); // +2 at level 1-4, +3 at 5-8, etc.
+    int abilityModifier = Math.max(0, (p.getDexterity() - 10) / 2); // Dex mod (min 0)
+    int attackBonus = proficiencyBonus + abilityModifier;
     
-    System.out.println("=== ATTACK CALCULATION ===");
-    System.out.println("Base Armor: " + m.getArmor() + " -> Effective: " + effectiveArmor);
-    System.out.println("Damage Resistance: " + monsterResistance);
+    int totalAttack = attackRoll + attackBonus;
     
-    if (attackRoll >= (8 + m.getDexterity()) || isCritical) {
-        int baseDamage = p.getAttack();
+    // Monster's armor class (simplified)
+    int monsterAC = 10 + (m.getDexterity() / 2); // Base 10 + half DEX
+    
+    System.out.println("\n=== ATTACK ===");
+    System.out.println("Roll: " + attackRoll + " + Bonus: " + attackBonus + " = " + totalAttack);
+    System.out.println("vs Monster AC: " + monsterAC);
+    
+    if (totalAttack >= monsterAC || isCritical) {
+        // Calculate damage: weapon damage + ability modifier
+        int weaponDamage = p.getAttack(); // This should be just weapon/base damage
+        int abilityDamageMod = Math.max(0, abilityModifier);
+        int baseDamage = weaponDamage + abilityDamageMod;
+        
         if (isCritical) {
             baseDamage *= 2;
             System.out.println("CRITICAL HIT!");
         }
         
-        // Calculate post-mitigation damage
+        // Apply armor penetration and calculate final damage
+        int effectiveArmor = p.calculateEffectiveArmor(m);
         double armorReducedDamage = baseDamage * (100.0 / (100 + effectiveArmor));
-        int finalDamage = (int) Math.max(1, Math.round(armorReducedDamage - monsterResistance));
+        int finalDamage = (int) Math.max(1, Math.round(armorReducedDamage));
         
-        System.out.println("Damage: " + baseDamage + " -> " + 
-                         (int)armorReducedDamage + " (after armor) -> " + 
-                         finalDamage + " (after resistance)");
+        m.takeDamage(baseDamage); // Monster applies resistance
         
-        m.takeDamage(baseDamage); // Monster handles final calculation
-        
-        String log = p.getName() + " hits " + m.getName() + " for " + finalDamage + " damage!" + 
-                    (isCritical ? " (Critical!)" : "");
-        System.out.println(log);
-        combatLog.add(log);
+        System.out.println(p.getName() + " hits for " + finalDamage + " damage!");
+        combatLog.add(p.getName() + " hits " + m.getName() + " for " + finalDamage + " damage!");
         
     } else {
-        System.out.println("You missed! (Rolled " + attackRoll + ")");
+        System.out.println("You missed!");
         combatLog.add(p.getName() + " missed " + m.getName());
     }
 }
@@ -147,9 +153,11 @@ public class CombatSystem {
     }
     
     private static void useItem(Player p) {
-        // Implementation for using items from inventory
-        System.out.println("Item functionality to be implemented with inventory system");
-        // You can call p.useItemMenu(sc) here if you want
+    // Simply call the player's item menu - it now uses the Inventory class
+    p.useItemMenu(sc);
+    
+    // Log the action
+    combatLog.add(p.getName() + " used an item");
     }
     
     private static void defend(Player p) {

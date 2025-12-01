@@ -1,5 +1,6 @@
 package dnd.items;
 
+import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +39,12 @@ public class Inventory {
     public void addGold(int amount) {
         gold += amount;
     }
+
+    public void clear() {
+        weapons.clear();
+        armors.clear();
+        consumables.clear();
+    }
     
     // Getters
     public List<Weapon> getWeapons() { return weapons; }
@@ -53,19 +60,52 @@ public class Inventory {
         return false;
     }
     
+     // Remove a specific weapon
     public boolean removeWeapon(Weapon weapon) {
         return weapons.remove(weapon);
     }
     
+    // Remove a specific armor
     public boolean removeArmor(Armor armor) {
         return armors.remove(armor);
     }
     
+    // Get total number of items
+    public int getTotalItems() {
+        return weapons.size() + armors.size() + consumables.size();
+    }
+    
+    // Check if inventory is empty
+    public boolean isEmpty() {
+        return weapons.isEmpty() && armors.isEmpty() && consumables.isEmpty();
+    }
+
+    // Get iterator for all items (for sellAllItems method)
+    public Iterator<Object> getAllItemsIterator() {
+        List<Object> allItems = new ArrayList<>();
+        allItems.addAll(weapons);
+        allItems.addAll(armors);
+        allItems.addAll(consumables);
+        return allItems.iterator();
+    }
+    
+    // Remove all items of a specific list (for sellAll)
+    public void removeAllWeapons() {
+        weapons.clear();
+    }
+    
+    public void removeAllArmor() {
+        armors.clear();
+    }
+    
+    public void removeAllConsumables() {
+        consumables.clear();
+    }
+
+
+    // Remove a specific consumable
     public boolean removeConsumable(Consumable consumable) {
-        if (consumable.isEmpty()) {
-            return consumables.remove(consumable);
-        }
-        return false;
+        return consumables.remove(consumable);
     }
     
     // Display methods

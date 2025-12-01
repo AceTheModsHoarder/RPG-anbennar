@@ -44,23 +44,12 @@ public class Consumable {
         return quantity <= 0;
     }
     
-    // Common consumables
+    // Static factory methods to match your Potion class
     public static Consumable createHealthPotion() {
         return new Consumable("Health Potion", "Restores 20 HP", 20);
     }
     
     public static Consumable createGreaterHealthPotion() {
         return new Consumable("Greater Health Potion", "Restores 50 HP", 50);
-    }
-    
-    public Consumable createManaPotion() {
-        return new Consumable("Mana Potion", "Restores 15 MP", 0, 1) {
-            @Override
-            public void use(Player player) {
-                player.restoreMana(15);
-                quantity--;
-                System.out.println("You used " + name + " and restored 15 MP!");
-            }
-        };
     }
 }
